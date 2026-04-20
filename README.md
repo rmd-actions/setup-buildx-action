@@ -41,16 +41,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       -
-        name: Checkout
-        uses: actions/checkout@v5
-      -
         # Add support for more platforms with QEMU (optional)
         # https://github.com/docker/setup-qemu-action
         name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
+        uses: docker/setup-qemu-action@v4
       -
         name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4
 ```
 
 ## Configuring your builder
@@ -94,7 +91,6 @@ The following inputs can be used as `step.with` keys:
 | `buildkitd-flags`            | String   |                    | [BuildKit daemon flags](https://docs.docker.com/engine/reference/commandline/buildx_create/#buildkitd-flags)                                                                |
 | `buildkitd-config` \*        | String   |                    | [BuildKit daemon config file](https://docs.docker.com/engine/reference/commandline/buildx_create/#config)                                                                   |
 | `buildkitd-config-inline` \* | String   |                    | Same as `buildkitd-config` but inline                                                                                                                                       |
-| `install` \*                 | Bool     | `false`            | Sets up `docker build` command as an alias to `docker buildx`                                                                                                               |
 | `use`                        | Bool     | `true`             | Switch to this builder instance                                                                                                                                             |
 | `endpoint`                   | String   |                    | [Optional address for docker socket](https://docs.docker.com/engine/reference/commandline/buildx_create/#description) or context from `docker context ls`                   |
 | `platforms`                  | List/CSV |                    | Fixed [platforms](https://docs.docker.com/engine/reference/commandline/buildx_create/#platform) for current node. If not empty, values take priority over the detected ones |
@@ -110,14 +106,6 @@ The following inputs can be used as `step.with` keys:
 
 > [!NOTE]
 > `buildkitd-config` and `buildkitd-config-inline` are mutually exclusive.
-
-> [!NOTE]
-> `install` input is deprecated and will be removed in a future release. This
->  input is not necessary when building with our actions like
-> `docker/build-push-action` or `docker/bake-action`. If you are still building
-> with the `docker build` command then you can set the `BUILDX_BUILDER`
-> environment variable, or you can just directly invoke the
-> `docker buildx build` command: https://github.com/docker/setup-buildx-action/pull/455
 
 ### outputs
 
@@ -142,23 +130,6 @@ The following [official docker environment variables](https://docs.docker.com/en
 
 ### `nodes` output
 
-```json
-[
-  {
-     "name": "builder-3820d274-502c-4498-ae24-d4c32b3023d90",
-     "endpoint": "unix:///var/run/docker.sock",
-     "driver-opts": [
-       "network=host",
-       "image=moby/buildkit:master"
-     ],
-    "status": "running",
-    "buildkitd-flags": "--allow-insecure-entitlement security.insecure --allow-insecure-entitlement network.host",
-    "buildkit": "3fab389",
-    "platforms": "linux/amd64,linux/amd64/v2,linux/amd64/v3,linux/amd64/v4,linux/386"
-  }
-]
-```
-
 | Name              | Type   | Description                |
 |-------------------|--------|----------------------------|
 | `name`            | String | Node name                  |
@@ -168,6 +139,21 @@ The following [official docker environment variables](https://docs.docker.com/en
 | `buildkitd-flags` | String | Flags for buildkitd daemon |
 | `buildkit`        | String | BuildKit version           |
 | `platforms`       | String | Platforms available        |
+
+Example:
+
+```json
+[
+  {
+    "name": "builder-8fa135e1-9bce-4a29-9368-46a09a1d750d0",
+    "endpoint": "unix:///var/run/docker.sock",
+    "status": "running",
+    "buildkitd-flags": "--allow-insecure-entitlement security.insecure --allow-insecure-entitlement network.host",
+    "buildkit": "v0.27.1",
+    "platforms": "linux/amd64,linux/amd64/v2,linux/amd64/v3,linux/386"
+  }
+]
+```
 
 ## Contributing
 
