@@ -35,7 +35,7 @@ jobs:
     steps:
       -
         name: Checkout
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       -
         name: Set up Docker Buildx
         id: buildx
@@ -54,7 +54,7 @@ jobs:
     steps:
       -
         name: Checkout
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       -
         name: Set up Docker Buildx 1
         uses: ./
@@ -67,7 +67,7 @@ jobs:
     steps:
       -
         name: Checkout
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       -
         name: Stop docker
         run: |
@@ -95,7 +95,7 @@ jobs:
     steps:
       -
         name: Checkout
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       -
         name: Create Dockerfile
         run: |
@@ -105,7 +105,7 @@ jobs:
           EOL
       -
         name: Set up QEMU
-        uses: docker/setup-qemu-action@96fe6ef7f33517b61c61be40b68a1882f3264fb8 # v4.2.0
+        uses: docker/setup-qemu-action@1f40c72289eff860ee54a304f1438e3cff362e0a # v4.3.0
       -
         name: Set up Docker Buildx
         uses: ./
@@ -129,7 +129,7 @@ jobs:
     steps:
       -
         name: Checkout
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       -
         name: Set up Docker Buildx
         uses: ./
@@ -152,7 +152,7 @@ jobs:
     steps:
       -
         name: Checkout
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       -
         name: Set up Docker Buildx
         uses: ./
@@ -165,7 +165,7 @@ jobs:
     steps:
       -
         name: Checkout
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       -
         name: Set up Docker Buildx
         uses: ./
@@ -182,6 +182,15 @@ jobs:
 
   endpoint:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        endpoint:
+          - mycontext
+          - tcp://127.0.0.1:2375
+    env:
+      # only the explicit endpoint should provide access to a daemon.
+      DOCKER_HOST: unix:///tmp/nonexistent-docker.sock
     services:
       dind:
         image: docker:29.3-dind@sha256:4d90f1f6c400315c2dba96d3ec93c01e64198395cbba04f79d12adce4f737029
@@ -198,7 +207,7 @@ jobs:
     steps:
       -
         name: Checkout
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       -
         name: Create context
         run: |
@@ -209,18 +218,26 @@ jobs:
           docker --context mycontext info
       -
         name: Set up Docker Buildx
+        id: buildx
         uses: ./
         with:
-          endpoint: mycontext
+          endpoint: ${{ matrix.endpoint }}
+      -
+        name: Build
         env:
-          DOCKER_CONTEXT: mycontext
+          BUILDER: ${{ steps.buildx.outputs.name }}
+        run: |
+          docker buildx build --builder "$BUILDER" - <<'EOF'
+          FROM scratch
+          LABEL test=endpoint
+          EOF
 
   buildkitd-config:
     runs-on: ubuntu-latest
     steps:
       -
         name: Checkout
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       -
         name: Create buildkitd conf
         run: |
@@ -252,7 +269,7 @@ jobs:
     steps:
       -
         name: Checkout
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       -
         name: Create Dockerfile
         run: |
@@ -288,10 +305,10 @@ jobs:
     steps:
       -
         name: Checkout
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       -
         name: Set up QEMU
-        uses: docker/setup-qemu-action@96fe6ef7f33517b61c61be40b68a1882f3264fb8 # v4.2.0
+        uses: docker/setup-qemu-action@1f40c72289eff860ee54a304f1438e3cff362e0a # v4.3.0
         with:
           platforms: ${{ matrix.qemu-platforms }}
       -
@@ -317,7 +334,7 @@ jobs:
     steps:
       -
         name: Checkout
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       -
         name: Set up Docker Buildx
         uses: ./
@@ -340,7 +357,7 @@ jobs:
     steps:
       -
         name: Checkout
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       -
         name: Uninstall docker cli
         run: |
@@ -368,7 +385,7 @@ jobs:
     steps:
       -
         name: Checkout
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       -
         name: Uninstall docker cli
         run: |
@@ -399,7 +416,7 @@ jobs:
     steps:
       -
         name: Checkout
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       -
         name: Create dummy contexts
         run: |
@@ -428,10 +445,10 @@ jobs:
     steps:
       -
         name: Checkout
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       -
         name: Set up QEMU
-        uses: docker/setup-qemu-action@96fe6ef7f33517b61c61be40b68a1882f3264fb8 # v4.2.0
+        uses: docker/setup-qemu-action@1f40c72289eff860ee54a304f1438e3cff362e0a # v4.3.0
       -
         name: Set up Docker Buildx
         uses: ./
@@ -443,7 +460,7 @@ jobs:
     steps:
       -
         name: Checkout
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       -
         name: Create Docker context
         run: |
@@ -466,7 +483,7 @@ jobs:
     steps:
       -
         name: Checkout
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       -
         name: Set up Docker Buildx
         uses: ./
@@ -485,10 +502,10 @@ jobs:
     steps:
       -
         name: Checkout
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       -
         name: Install k3s
-        uses: crazy-max/.github/.github/actions/install-k3s@46267a6e61cd56aac2fc79943df180152f4c89d6 # v1.10.1
+        uses: crazy-max/.github/.github/actions/install-k3s@f91220cba053bd54299ba645a599ee8ed436f222 # v1.11.0
       -
         name: Set up Docker Buildx
         id: buildx
@@ -533,7 +550,7 @@ jobs:
     steps:
       -
         name: Checkout
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       -
         name: Set up Docker Buildx
         uses: ./
@@ -546,7 +563,7 @@ jobs:
     steps:
       -
         name: Checkout
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       -
         name: Set up Docker Buildx
         id: buildx
@@ -567,7 +584,7 @@ jobs:
     steps:
       -
         name: Checkout
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       -
         name: Set up Docker Buildx
         uses: ./
@@ -586,7 +603,7 @@ jobs:
     steps:
       -
         name: Checkout
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       -
         name: Set up Docker Buildx
         id: buildx
